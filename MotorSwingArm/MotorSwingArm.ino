@@ -51,6 +51,15 @@ uint32_t posSet;
 uint32_t pos;
 int32_t u;
 int32_t error;
+int32_t u_p;
+int32_t u_i;
+int32_t u_d;
+int32_t error_i;
+int32_t error_d;
+
+unsigned long previousMillis;
+unsigned long currentMillis;
+unsigned long duration;
 
 float serialdata;
 char serialCMD;
@@ -64,7 +73,6 @@ float A;
 int switchnum;
 int inChar;
 String inString = "";
-
 void Command();
 
 void setup()
@@ -78,19 +86,19 @@ void setup()
 
 void loop()
 {
+  currentMillis = millis();
   if (Serial.available())
  {
    Command();
  } 
 
-  posSet = 4.74*A + 127;
+  posSet = 4.71*A + 127;
   pos = feedback.readFeedback();
-  
-  /* A2D min - 44
-   *  A2D max - 1005
+  /* A2D min - 42
+   *  A2D max - 1020
    *  A2D middle - 544
    *  A2D 0 - 127
-   *  A2D 180 - 980
+   *  A2D 180 - 975
    */
 
    // Software limit switches for position
@@ -101,8 +109,14 @@ void loop()
     Serial.println("Fault detected, Motor Stopped");
     _delay_ms(500);
    }
+   
   error = posSet - pos;
-  u = P*error;
+  u_p = P*error;
+
+  error_i = 0;
+  u_i = I*error_i;
+
+  u = u_p + u_i;
 
   //Serial.print("u0: ");
   //Serial.println(u);
@@ -125,7 +139,6 @@ void loop()
       rightMotor.backward(u);
     } 
   /*
-  // delay for loop
   Serial.print("u: ");
   Serial.println(u);
   Serial.print("error: ");
@@ -133,6 +146,11 @@ void loop()
   Serial.println("------");
   _delay_ms(1000); 
   */
+  // Check loop duration
+  duration = currentMillis-previousMillis;
+  previousMillis = currentMillis;
+  //Serial.print("loop duration: ");
+  //Serial.println(duration);
 }
 
 void Command()
