@@ -54,8 +54,9 @@ int32_t error;
 int32_t u_p;
 int32_t u_i;
 int32_t u_d;
-int32_t error_i;
-int32_t error_d;
+int32_t iState;
+int32_t dState;
+int32_t iStateOut;
 
 unsigned long previousMillis;
 unsigned long currentMillis;
@@ -73,6 +74,7 @@ float A;
 int switchnum;
 int inChar;
 String inString = "";
+
 void Command();
 
 void setup()
@@ -108,18 +110,37 @@ void loop()
     P = I = D = N = W = 0;
     Serial.println("Fault detected, Motor Stopped");
     _delay_ms(500);
-   }
+   } 
    
   error = posSet - pos;
+  
+  // Proportional
   u_p = P*error;
-
-  error_i = 0;
-  u_i = I*error_i;
-
+  
+  // Integral
+  iState += error;
+  //Serial.print("iState: ");
+  //Serial.println(iState);
+  // Saturate integral for anti-wind up
+  if (iState > W)
+  {
+    iStateOut = W;
+    iState = 0;
+  }
+  else if (iState < -W)
+  {
+    iStateOut = -W;
+    iState = 0;
+  }
+  else
+  {
+    iStateOut = iState;
+  }
+  
+  u_i = I*iStateOut;
+   
+  // command
   u = u_p + u_i;
-
-  //Serial.print("u0: ");
-  //Serial.println(u);
  
   if (u > 255)
   {
@@ -138,19 +159,26 @@ void loop()
       u = -1*u;
       rightMotor.backward(u);
     } 
-  /*
-  Serial.print("u: ");
-  Serial.println(u);
-  Serial.print("error: ");
-  Serial.println(error);
-  Serial.println("------");
-  _delay_ms(1000); 
-  */
+  
+  //Serial.print("u: ");
+  //Serial.println(u);
+  //Serial.println("------"); 
+  
   // Check loop duration
   duration = currentMillis-previousMillis;
   previousMillis = currentMillis;
   //Serial.print("loop duration: ");
   //Serial.println(duration);
+  /*
+  Serial.print("error: ");
+  Serial.println(error);
+  Serial.print("ui: ");
+  Serial.println(u_i);
+  
+  Serial.print("iStateOut: ");
+  Serial.println(iStateOut);
+  _delay_ms(1000);
+  */
 }
 
 void Command()
