@@ -36,7 +36,7 @@ Motor::Motor(uint8_t pinIN1, uint8_t pinIN2, uint8_t pinEN) :
 }
 
 // The forward implementation
-void Motor::forward(uint8_t speed)
+void Motor::forward(uint8_t u)
 {
 	// set the control lines to drive the motor forward
 	// This is described as "Direction B" in the
@@ -45,12 +45,12 @@ void Motor::forward(uint8_t speed)
 	digitalWrite(pinIN1_, HIGH);
 	digitalWrite(pinIN2_, LOW);
 
-	// use the enable line with PWM to control the speed
-	analogWrite(pinEN_, speed);
+	// use the enable line with PWM to control the u
+	analogWrite(pinEN_, u);
 }
 
 // The backward implementation
-void Motor::backward(uint8_t speed)
+void Motor::backward(uint8_t u)
 {
 	// set the control lines to drive the motor backwards
 	// This is described as "Direction A" in the 
@@ -59,8 +59,8 @@ void Motor::backward(uint8_t speed)
 	digitalWrite(pinIN1_, LOW);
 	digitalWrite(pinIN2_, HIGH);
 
-	// use the enable line with PWM to control the speed
-	analogWrite(pinEN_, speed);
+	// use the enable line with PWM to control the u
+	analogWrite(pinEN_, u);
 }
 
 // the brake implementation

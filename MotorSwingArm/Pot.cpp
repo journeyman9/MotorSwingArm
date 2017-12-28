@@ -1,8 +1,7 @@
 #include "Pot.h"
 #include "Arduino.h"
 
-int sensorVal = 0;
-int val;
+unsigned long sensorVal = 0;
 
 Pot::Pot()
 {
@@ -20,8 +19,6 @@ int Pot::readFeedback()
       ADCSRA |= (1<<ADSC); //Restart conversion
       while(ADCSRA&(1<<ADSC)); //ADC conversion takes 13-260 microseconds
       sensorVal = ADC;
-      val = map(sensorVal, 0, 1023, 0, 255);
-      //Serial.println(val);
-      //_delay_ms(1000);
-      return val;
+
+      return sensorVal;
 }

@@ -47,18 +47,20 @@ Motor leftMotor(motorLIN1Pin, motorLIN2Pin, motorLENPin);
 
 Pot feedback;
 
-unsigned int posSet;
-unsigned int pos;
+uint32_t posSet;
+uint32_t pos;
+int32_t u;
+int32_t error;
 
-unsigned long serialdata;
+uint32_t serialdata;
 char serialCMD;
 int inbyte;
-unsigned long P;
-unsigned long I;
-unsigned long D;
-unsigned long N;
-unsigned long W;
-unsigned long A;
+int32_t P;
+int32_t I;
+int32_t D;
+int32_t N;
+int32_t W;
+int32_t A;
 int switchnum;
 
 void Command();
@@ -70,7 +72,7 @@ void setup()
   PORTD |= 0b00000100; // Secondary function to set pull up resistor
   Serial.begin(9600);
   A = 90; //Define Angle as from 0 deg to 180deg. Assume nominal 90deg for vertical stick.
-}
+ }
 
 void loop()
 {
@@ -78,30 +80,58 @@ void loop()
  {
    Command();
  } 
+
+  posSet = 4.74*A + 127;
   pos = feedback.readFeedback();
-    if ((PIND&(1<<2)) > 0)
-    {
-      rightMotor.forward(pos);
-      //Serial.println(pos);
-      //_delay_ms(500);
-    }
+  
+  /* A2D min - 44
+   *  A2D max - 1005
+   *  A2D middle - 544
+   *  A2D 0 - 127
+   *  A2D 180 - 980
+   */
 
-    else if ((PIND&(1<<2)) == 0)
-    {
-      rightMotor.backward(pos);
-      //Serial.println(pos+1);
-      //_delay_ms(500);
-    }
+   // Software limit switches for position
+   if ((pos >= 767) || (pos <= 340))
+   {
+    u = 0;
+    P = I = D = N = W = 0;
+    Serial.println("Fault detected, Motor Stopped");
+    _delay_ms(500);
+   }
+  error = posSet - pos;
+  u = P*error/100;
 
-    else
+  //Serial.print("u0: ");
+  //Serial.println(u);
+ 
+  if (u > 255)
+  {
+    u = 255;
+  }
+    else if (u < -255)
     {
-      rightMotor.freeRun();
-      //Serial.println(pos+2);
-      //_delay_ms(500);
+      u = -255; 
     }
+  if (u >= 0)
+  {
+    rightMotor.forward(u);
+  }
+    else if (u < 0)
+    {
+      u = -1*u;
+      rightMotor.backward(u);
+    } 
+/*
+  // delay for loop
+  Serial.print("u: ");
+  Serial.println(u);
+  Serial.print("error: ");
+  Serial.println(error);
+  Serial.println("------");
+  _delay_ms(1000); 
+*/
 }
-
-
 
 void Command()
 {
