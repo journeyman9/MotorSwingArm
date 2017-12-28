@@ -52,16 +52,18 @@ uint32_t pos;
 int32_t u;
 int32_t error;
 
-uint32_t serialdata;
+float serialdata;
 char serialCMD;
 int inbyte;
-int32_t P;
-int32_t I;
-int32_t D;
-int32_t N;
-int32_t W;
-int32_t A;
+float P;
+float I;
+float D;
+float N;
+float W;
+float A;
 int switchnum;
+int inChar;
+String inString = "";
 
 void Command();
 
@@ -100,7 +102,7 @@ void loop()
     _delay_ms(500);
    }
   error = posSet - pos;
-  u = P*error/100;
+  u = P*error;
 
   //Serial.print("u0: ");
   //Serial.println(u);
@@ -122,7 +124,7 @@ void loop()
       u = -1*u;
       rightMotor.backward(u);
     } 
-/*
+  /*
   // delay for loop
   Serial.print("u: ");
   Serial.println(u);
@@ -130,7 +132,7 @@ void loop()
   Serial.println(error);
   Serial.println("------");
   _delay_ms(1000); 
-*/
+  */
 }
 
 void Command()
@@ -298,26 +300,29 @@ long getCommand()
   return serialCMD;
 }
 
-long getSerial()
+float getSerial()
 {
-  serialdata = 0;
-  inbyte = 0;
-  while (inbyte != '\r')
-  {
-    inbyte = Serial.read(); 
-    
-    if (inbyte >= 48 && inbyte <= 57 && inbyte != '\r')
-    {
-      serialdata = serialdata * 10 + inbyte - '0';
-    }
-    else if (inbyte > 0 && inbyte < 48 && inbyte != '\r' || inbyte > 57  )
-    {
-        Serial.print("Num Error: ");
-        Serial.println(inbyte);
-        serialdata = 'E';
-        break;
-    }
+ serialdata = 0;
+ inChar = 0;
+while (inChar != '\r')
+{
+   inChar = Serial.read();
+//Serial.print("inChar: ");
+//Serial.println(inChar);
+  if (inChar >= 0 && inChar != '\r' ) 
+  { 
+    inString += (char)inChar;
   }
-
-  return serialdata;
+   else if (inChar >=0) 
+   {
+     serialdata = inString.toFloat();
+//Serial.print("inString: ");
+//Serial.print(inString);
+//Serial.print("serialdata: ");
+//Serial.println(serialdata);
+     inString = "";
+    }
 }
+return serialdata;
+}
+
