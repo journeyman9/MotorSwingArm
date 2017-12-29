@@ -118,29 +118,23 @@ void loop()
   u_p = P*error;
   
   // Integral
-  iState += error;
-  //Serial.print("iState: ");
+  iState += I*error;
+  //Serial.print("iStateBefore: ");
   //Serial.println(iState);
   // Saturate integral for anti-wind up
   if (iState > W)
   {
-    iStateOut = W;
-    iState = 0;
+    iState = W;
   }
   else if (iState < -W)
   {
-    iStateOut = -W;
-    iState = 0;
+    iState = -W;
   }
-  else
-  {
-    iStateOut = iState;
-  }
-  
-  u_i = I*iStateOut;
+
+  //u_i = I*iStateOut;
    
   // command
-  u = u_p + u_i;
+  u = u_p + iState;
  
   if (u > 255)
   {
@@ -175,8 +169,8 @@ void loop()
   Serial.print("ui: ");
   Serial.println(u_i);
   
-  Serial.print("iStateOut: ");
-  Serial.println(iStateOut);
+  Serial.print("iState: ");
+  Serial.println(iState);
   _delay_ms(1000);
   */
 }
