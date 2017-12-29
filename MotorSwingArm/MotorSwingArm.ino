@@ -54,9 +54,8 @@ int32_t error;
 int32_t u_p;
 int32_t u_i;
 int32_t u_d;
-int32_t iState;
-int32_t dState;
-int32_t iStateOut;
+int32_t dTerm;
+int32_t previousError;
 
 unsigned long previousMillis;
 unsigned long currentMillis;
@@ -118,24 +117,24 @@ void loop()
   u_p = P*error;
   
   // Integral
-  iState += I*error;
-  //Serial.print("iStateBefore: ");
-  //Serial.println(iState);
+  u_i += (I*error);
+  // Serial.print("u_i before: ");
+  // Serial.println(u_i);
   // Saturate integral for anti-wind up
-  if (iState > W)
+  if (u_i > W)
   {
-    iState = W;
+    u_i = W;
   }
-  else if (iState < -W)
+  else if (u_i < -W)
   {
-    iState = -W;
+    u_i= -W;
   }
-
-  //u_i = I*iStateOut;
-   
-  // command
-  u = u_p + iState;
  
+  // command
+  u = u_p + u_i;
+  //Serial.print("u before: ");
+  //Serial.println(u);
+  
   if (u > 255)
   {
     u = 255;
@@ -144,33 +143,31 @@ void loop()
     {
       u = -255; 
     }
+  
   if (u >= 0)
   {
     rightMotor.forward(u);
   }
     else if (u < 0)
     {
-      u = -1*u;
-      rightMotor.backward(u);
+      rightMotor.backward(-u);
     } 
-  
-  //Serial.print("u: ");
-  //Serial.println(u);
-  //Serial.println("------"); 
+
   
   // Check loop duration
   duration = currentMillis-previousMillis;
   previousMillis = currentMillis;
   //Serial.print("loop duration: ");
   //Serial.println(duration);
-  /*
+  /*  
+  Serial.print("u: ");
+  Serial.println(u);
+  
   Serial.print("error: ");
   Serial.println(error);
-  Serial.print("ui: ");
+  Serial.print("u_i: ");
   Serial.println(u_i);
-  
-  Serial.print("iState: ");
-  Serial.println(iState);
+  Serial.println("------"); 
   _delay_ms(1000);
   */
 }
