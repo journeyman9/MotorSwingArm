@@ -153,18 +153,16 @@ void loop()
     
     if (u > 255)
     {
-      // Saturate for anti-wind up
-      //u_i = 0;
       //Saturate command
       u = 255;
+      // Saturate for anti-wind up
       u_i = u-P*error;
     }
       else if (u < -255)
-      {
-        // Saturate for anti-wind up
-        //u_i = 0;
+      { 
         // Saturate command
         u = -255;
+        // Saturate for anti-wind up
         u_i = u+P*error; 
       }
     
