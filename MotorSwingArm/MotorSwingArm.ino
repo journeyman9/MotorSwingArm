@@ -52,8 +52,8 @@ uint32_t pos;
 int32_t u;
 int32_t error;
 int32_t u_p;
-int32_t u_i;
-int32_t u_d;
+float u_i;
+float u_d;
 int32_t dTerm;
 int32_t previousError;
 int32_t previousPos;
@@ -122,7 +122,8 @@ void loop()
     u_p = P*error;
     
     // Integral
-    u_i += (I*error)*loopTime;
+    u_i += (error)*.021;
+    u_i *= I;
     // Serial.print("u_i before: ");
     // Serial.println(u_i);
     /*
@@ -143,7 +144,7 @@ void loop()
     // derivative on measurement
     dTerm = pos - previousPos;
     previousPos = pos;
-    u_d = D*dTerm/loopTime;
+    u_d = D*dTerm/.021;
     
     // command
     u = u_p + u_i - u_d;
@@ -153,16 +154,18 @@ void loop()
     if (u > 255)
     {
       // Saturate for anti-wind up
-      u_i = 0;
+      //u_i = 0;
       //Saturate command
       u = 255;
+      u_i = u-P*error;
     }
       else if (u < -255)
       {
         // Saturate for anti-wind up
-        u_i = 0;
+        //u_i = 0;
         // Saturate command
-        u = -255; 
+        u = -255;
+        u_i = u+P*error; 
       }
     
     if (u >= 0)
