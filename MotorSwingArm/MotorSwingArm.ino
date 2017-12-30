@@ -56,6 +56,7 @@ int32_t u_i;
 int32_t u_d;
 int32_t dTerm;
 int32_t previousError;
+int32_t previousPos;
 
 unsigned long previousMillis;
 unsigned long currentMillis;
@@ -103,7 +104,7 @@ void loop()
    */
 
    // Software limit switches for position
-   if ((pos >= 767) || (pos <= 340))
+   if ((pos >= 900) || (pos <= 155)) // for 30 and 150, 767 340
    {
     u = 0;
     P = I = D = N = W = 0;
@@ -120,7 +121,7 @@ void loop()
   u_i += (I*error);
   // Serial.print("u_i before: ");
   // Serial.println(u_i);
- 
+  /*
   // Saturate integral for anti-wind up
   if (u_i > W)
   {
@@ -130,24 +131,33 @@ void loop()
   {
     u_i= -W;
   }
+  */
+
+  // Derivative of error
+  dTerm = error - previousError;
+  previousError = error;
+  // derivative on measurement
+  //dTerm = pos - previousPos;
+  //previousPos = pos;
+  u_d = D*dTerm;
   
   // command
-  u = u_p + u_i;
+  u = u_p + u_i - u_d;
   // Serial.print("u before: ");
   // Serial.println(u);
   
   if (u > 255)
   {
-    //u_i = 0;
-    //u_i = W;
-    //u_i -= u - 255; // for zeroing. can be problematic if u_i not reason for sat 
+    // Saturate for anti-wind up
+    u_i = 0;
+    //Saturate command
     u = 255;
   }
     else if (u < -255)
     {
-      //u_i = 0;
-      //u_i = -W;
-      //u_i += -255 - u;  // for zeroing
+      // Saturate for anti-wind up
+      u_i = 0;
+      // Saturate command
       u = -255; 
     }
   
@@ -172,6 +182,8 @@ void loop()
   Serial.println(u);
   Serial.print("error: ");
   Serial.println(error);
+  Serial.print("u_d: ");
+  Serial.println(u_d);
   Serial.println("------"); 
   _delay_ms(500);
   */
