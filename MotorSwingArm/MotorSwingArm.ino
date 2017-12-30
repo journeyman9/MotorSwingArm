@@ -120,7 +120,7 @@ void loop()
   u_i += (I*error);
   // Serial.print("u_i before: ");
   // Serial.println(u_i);
-  /*
+ 
   // Saturate integral for anti-wind up
   if (u_i > W)
   {
@@ -130,7 +130,7 @@ void loop()
   {
     u_i= -W;
   }
-  */
+  
   // command
   u = u_p + u_i;
   // Serial.print("u before: ");
