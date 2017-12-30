@@ -120,6 +120,7 @@ void loop()
   u_i += (I*error);
   // Serial.print("u_i before: ");
   // Serial.println(u_i);
+  /*
   // Saturate integral for anti-wind up
   if (u_i > W)
   {
@@ -129,18 +130,24 @@ void loop()
   {
     u_i= -W;
   }
- 
+  */
   // command
   u = u_p + u_i;
-  //Serial.print("u before: ");
-  //Serial.println(u);
+  // Serial.print("u before: ");
+  // Serial.println(u);
   
   if (u > 255)
   {
+    //u_i = 0;
+    //u_i = W;
+    //u_i -= u - 255; // for zeroing. can be problematic if u_i not reason for sat 
     u = 255;
   }
     else if (u < -255)
     {
+      //u_i = 0;
+      //u_i = -W;
+      //u_i += -255 - u;  // for zeroing
       u = -255; 
     }
   
@@ -152,23 +159,21 @@ void loop()
     {
       rightMotor.backward(-u);
     } 
-
-  
+    
   // Check loop duration
   duration = currentMillis-previousMillis;
   previousMillis = currentMillis;
   //Serial.print("loop duration: ");
   //Serial.println(duration);
-  /*  
-  Serial.print("u: ");
-  Serial.println(u);
-  
-  Serial.print("error: ");
-  Serial.println(error);
+  /*
   Serial.print("u_i: ");
   Serial.println(u_i);
+  Serial.print("u: ");
+  Serial.println(u);
+  Serial.print("error: ");
+  Serial.println(error);
   Serial.println("------"); 
-  _delay_ms(1000);
+  _delay_ms(500);
   */
 }
 
