@@ -126,44 +126,38 @@ void loop()
     u_i *= I;
     // Serial.print("u_i before: ");
     // Serial.println(u_i);
-    /*
-    // Saturate integral for anti-wind up
-    if (u_i > W)
-    {
-      u_i = W;
-    }
-    else if (u_i < -W)
-    {
-      u_i= -W;
-    }
-    */
   
     // Derivative of error
-    //dTerm = error - previousError;
-    //previousError = error;
-    // derivative on measurement
-    dTerm = pos - previousPos;
-    previousPos = pos;
+    dTerm = error - previousError;
+    previousError = error;
+    // derivative on measurement, remember u_d is negative 
+    //dTerm = pos - previousPos;
+    //previousPos = pos;
     u_d = D*dTerm/.021;
     
     // command
-    u = u_p + u_i - u_d;
+    u = u_p + u_i + u_d;
     // Serial.print("u before: ");
     // Serial.println(u);
     
     if (u > 255)
     {
+      // Saturate for anti-wind up
+      u_i -= u - 255;
       //Saturate command
       u = 255;
       // Saturate for anti-wind up
-      u_i = u-P*error;
+      //u_i = u-P*error;
+     
     }
       else if (u < -255)
       { 
+        // Saturate for anti-wind up
+        u_i += -255 - u;
         // Saturate command
         u = -255;
         // Saturate for anti-wind up
-        u_i = u+P*error; 
+        //u_i = u+P*error; 
       }
     
     if (u >= 0)
