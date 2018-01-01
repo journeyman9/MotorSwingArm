@@ -1,19 +1,3 @@
-/*
- * Tutorial 1a: Motor Driver
- * 
- * Drives two motors forward.
- *
- * The circuit:
- *  - 6 pins connected to the L298 Motor Driver
- *
- * created 27 Sep 2013
- * by Blaise Jarrett
- *
- * This example code is in the public domain.
- *
- */
-
-// include our motor code
 #include "motor.h"
 #include "Pot.h"
 #include "Arduino.h"
@@ -57,6 +41,8 @@ float u_d;
 int32_t dTerm;
 int32_t previousError;
 int32_t previousPos;
+int32_t filter;
+
 
 unsigned long previousMillis;
 unsigned long currentMillis;
@@ -128,12 +114,18 @@ void loop()
     // Serial.println(u_i);
   
     // Derivative of error
-    dTerm = error - previousError;
-    previousError = error;
+    //dTerm = error - previousError;
+    //previousError = error;
     // derivative on measurement, remember u_d is negative 
     //dTerm = pos - previousPos;
     //previousPos = pos;
-    u_d = D*dTerm/.021;
+    //u_d = D*dTerm/.021;
+
+    // Filter derivative
+    //u_d = (D*error - filter)*N;
+    //filter += .021*u_d;
+    //Serial.print("Filter term: ");
+    //Serial.println(u_d);
     
     // command
     u = u_p + u_i + u_d;
