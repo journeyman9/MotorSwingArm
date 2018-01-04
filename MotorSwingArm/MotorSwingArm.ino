@@ -89,6 +89,7 @@ void setup()
 
 void loop()
 {
+  PORTD ^= 0b10000000;
   currentMillis = micros();
   duration = currentMillis-previousMillis;
   
@@ -98,37 +99,8 @@ void loop()
    } 
   
     posSet = 4.71*A + 127;
-      
-    // Check loop duration
-    previousMillis = currentMillis;
-    //Serial.print("loop duration: ");
-    //Serial.println(duration);
-    /*
-    Serial.print("u_i: ");
-    Serial.println(u_i);
-    Serial.print("u: ");
-    Serial.println(u);
-    Serial.print("error: ");
-    Serial.println(error);
-    Serial.print("u_d: ");
-    Serial.println(u_d);
-    */
-    //Serial.println("------"); 
-    //_delay_ms(500);
-}
-
-ISR(TIMER1_COMPA_vect)
-{
-  PORTD ^= 0b10000000;
-  pos = feedback.readFeedback();
-    /* A2D min - 42
-     *  A2D max - 1020
-     *  A2D middle - 544
-     *  A2D 0 - 127
-     *  A2D 180 - 975
-     */ 
-     
-     // Software limit switches for position
+    
+    // Software limit switches for position
      if ((pos >= 900) || (pos <= 155)) // for 30 and 150, 767 340
      {
       u = 0;
@@ -136,17 +108,29 @@ ISR(TIMER1_COMPA_vect)
       Serial.println("Fault detected, Motor Stopped");
       _delay_ms(500);
      } 
-     
+
     error = posSet - pos;
     
     // Proportional
     u_p = P*error;
     
     // Integral
-    u_i += (error)*.007;
+    u_i += (error)*.001;
     u_i *= I;
     // Serial.print("u_i before: ");
     // Serial.println(u_i);
+
+    // Saturate integral for anti-wind up
+    /*
+   if (u_i > W)
+   {
+    u_i = W;
+   }
+   else if (u_i < -W)
+   {  
+    u_i= -W;
+   }
+   */
   
     // Derivative of error
     //dTerm = error - previousError;
@@ -154,11 +138,11 @@ ISR(TIMER1_COMPA_vect)
     // derivative on measurement, remember u_d is negative
     //dTerm = pos - previousPos;
     //previousPos = pos;
-    //u_d = D*dTerm/.007;
+    //u_d = D*dTerm/.001;
 
     // Filter derivative
     u_d = (D*error - filter)*N;
-    filter += .007*u_d;
+    filter += .001*u_d;
     //Serial.print("Filter term: ");
     //Serial.println(u_d);  
     
@@ -180,7 +164,7 @@ ISR(TIMER1_COMPA_vect)
       else if (u < -255)
       { 
         // Saturate for anti-wind up
-        u_i += -255 - u;
+        //u_i += -255 - u;
         // Saturate command
         u = -255;
         // Saturate for anti-wind up
@@ -194,7 +178,39 @@ ISR(TIMER1_COMPA_vect)
       else if (u < 0)
       {
         rightMotor.backward(-u);
-      } 
+      }
+           
+    // Check loop duration
+    previousMillis = currentMillis;
+    //Serial.print("loop duration: ");
+    //Serial.println(duration);
+    /*
+    Serial.print("u_i: ");
+    Serial.println(u_i);
+    Serial.print("u: ");
+    Serial.println(u);
+    Serial.print("error: ");
+    Serial.println(error);
+    Serial.print("u_d: ");
+    Serial.println(u_d);
+    */
+    //Serial.println("------"); 
+
+    //Delay control loop for nyquist frequency
+    _delay_ms(10);
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+  pos = feedback.readFeedback();
+    /* A2D min - 42
+     *  A2D max - 1020
+     *  A2D middle - 544
+     *  A2D 0 - 127
+     *  A2D 180 - 975
+     */ 
+     
+     
 }
 
 void Command()
