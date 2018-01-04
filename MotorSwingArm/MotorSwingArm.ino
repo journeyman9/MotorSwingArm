@@ -1,6 +1,7 @@
 #include "motor.h"
 #include "Pot.h"
 #include "Arduino.h"
+#include <avr/io.h>
 
 // The Right Motors Enable Pin
 // Labelled on the motor driver as ENA
@@ -43,11 +44,9 @@ int32_t previousError;
 int32_t previousPos;
 int32_t filter;
 
-
 unsigned long previousMillis;
 unsigned long currentMillis;
-unsigned long duration;
-int loopTime = 1; // 1 sec
+unsigned long duration;       // dt of loop using pin on o-scope is 6.24ms 
 
 float serialdata;
 char serialCMD;
@@ -66,44 +65,70 @@ void Command();
 
 void setup()
 {
-  //Switch Input
-  DDRD |= 0x00;
-  PORTD |= 0b00000100; // Secondary function to set pull up resistor
+  //Output pin for accurate loop
+  DDRD |= 0b100000000;
+  PORTD |= 0b10000000;
   Serial.begin(9600);
   A = 90; //Define Angle as from 0 deg to 180deg. Assume nominal 90deg for vertical stick.
+
+  //1kHz interrupt using timer 1
+  cli(); // Stop interrupts
+  TCCR1A = 0; // Set entire TCCR1A register to 0
+  TCCR1B = 0; // same for TCCR1B
+  TCNT1 = 0; // initialize counter value to 0;
+  // set timer count for 1kHz
+  OCR1A = 1999; // (16*10^6)/(1000*8) - 1          dt is therefore = 6ms + 1ms.
+  //turn on CTC mode
+  TCCR1B |= (1<< WGM12);
+  // Set CS11 bit for 8 prescalar
+  TCCR1B |= (1<<CS11);
+  // enable timer compare interrupt
+  TIMSK1 |= (1<<OCIE1A);
+  sei(); // allow interrupts
  }
 
 void loop()
 {
-<<<<<<< HEAD
-  PORTD ^= 0b10000000;
   currentMillis = micros();
-=======
-  currentMillis = millis();
->>>>>>> parent of 759d275... interrupt at 1kHz
   duration = currentMillis-previousMillis;
-  if (duration >= loopTime)
-  {
+  
     if (Serial.available())
    {
      Command();
    } 
   
     posSet = 4.71*A + 127;
-<<<<<<< HEAD
-    
-    // Software limit switches for position
-=======
-    pos = feedback.readFeedback();
+      
+    // Check loop duration
+    previousMillis = currentMillis;
+    //Serial.print("loop duration: ");
+    //Serial.println(duration);
+    /*
+    Serial.print("u_i: ");
+    Serial.println(u_i);
+    Serial.print("u: ");
+    Serial.println(u);
+    Serial.print("error: ");
+    Serial.println(error);
+    Serial.print("u_d: ");
+    Serial.println(u_d);
+    */
+    //Serial.println("------"); 
+    //_delay_ms(500);
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+  PORTD ^= 0b10000000;
+  pos = feedback.readFeedback();
     /* A2D min - 42
      *  A2D max - 1020
      *  A2D middle - 544
      *  A2D 0 - 127
      *  A2D 180 - 975
-     */
-  
+     */ 
+     
      // Software limit switches for position
->>>>>>> parent of 759d275... interrupt at 1kHz
      if ((pos >= 900) || (pos <= 155)) // for 30 and 150, 767 340
      {
       u = 0;
@@ -111,23 +136,19 @@ void loop()
       Serial.println("Fault detected, Motor Stopped");
       _delay_ms(500);
      } 
-
+     
     error = posSet - pos;
     
     // Proportional
     u_p = P*error;
     
     // Integral
-<<<<<<< HEAD
-    u_i += (error)*.001;
-=======
-    u_i += (error)*.021;
->>>>>>> parent of 759d275... interrupt at 1kHz
+    u_i += (error)*.007;
     u_i *= I;
     // Serial.print("u_i before: ");
     // Serial.println(u_i);
 
-    // Saturate integral for anti-wind up
+   // Saturate integral for anti-wind up
     /*
    if (u_i > W)
    {
@@ -142,24 +163,16 @@ void loop()
     // Derivative of error
     //dTerm = error - previousError;
     //previousError = error;
-    // derivative on measurement, remember u_d is negative 
+    // derivative on measurement, remember u_d is negative
     //dTerm = pos - previousPos;
     //previousPos = pos;
-<<<<<<< HEAD
-    //u_d = D*dTerm/.001;
+    //u_d = D*dTerm/.007;
 
     // Filter derivative
     u_d = (D*error - filter)*N;
-    filter += .001*u_d;
-=======
-    //u_d = D*dTerm/.021;
-
-    // Filter derivative
-    //u_d = (D*error - filter)*N;
-    //filter += .021*u_d;
->>>>>>> parent of 759d275... interrupt at 1kHz
+    filter += .007*u_d;
     //Serial.print("Filter term: ");
-    //Serial.println(u_d);
+    //Serial.println(u_d);  
     
     // command
     u = u_p + u_i + u_d;
@@ -179,12 +192,12 @@ void loop()
       else if (u < -255)
       { 
         // Saturate for anti-wind up
-        //u_i += -255 - u;
+        u_i += -255 - u;
         // Saturate command
         u = -255;
         // Saturate for anti-wind up
         //u_i = u+P*error; 
-      }
+      } 
     
     if (u >= 0)
     {
@@ -193,51 +206,7 @@ void loop()
       else if (u < 0)
       {
         rightMotor.backward(-u);
-<<<<<<< HEAD
-      }
-           
-=======
       } 
-      
->>>>>>> parent of 759d275... interrupt at 1kHz
-    // Check loop duration
-    previousMillis = currentMillis;
-    //Serial.print("loop duration: ");
-    //Serial.println(duration);
-    /*
-    Serial.print("u_i: ");
-    Serial.println(u_i);
-    Serial.print("u: ");
-    Serial.println(u);
-    Serial.print("error: ");
-    Serial.println(error);
-    Serial.print("u_d: ");
-    Serial.println(u_d);
-<<<<<<< HEAD
-    */
-    //Serial.println("------"); 
-
-    //Delay control loop for nyquist frequency
-    _delay_ms(10);
-}
-
-ISR(TIMER1_COMPA_vect)
-{
-  pos = feedback.readFeedback();
-    /* A2D min - 42
-     *  A2D max - 1020
-     *  A2D middle - 544
-     *  A2D 0 - 127
-     *  A2D 180 - 975
-     */ 
-     
-     
-=======
-    Serial.println("------"); 
-    _delay_ms(500);
-    */
-  }
->>>>>>> parent of 759d275... interrupt at 1kHz
 }
 
 void Command()
