@@ -1,3 +1,4 @@
+#include "float.h"
 #include "motor.h"
 #include "Pot.h"
 #include "Arduino.h"
@@ -36,17 +37,18 @@ uint32_t posSet;
 uint32_t pos;
 int32_t u;
 int32_t error;
-int32_t u_p;
+float u_p;
 float u_i;
 float u_d;
-int32_t dTerm;
+float dTerm;
 int32_t previousError;
-int32_t previousPos;
-int32_t filter;
+uint32_t previousPos;
+float filter;
 
 unsigned long previousMillis;
 unsigned long currentMillis;
 unsigned long duration;       // dt of loop using pin on o-scope is 6.24ms 
+float dt = .007;
 
 float serialdata;
 char serialCMD;
@@ -77,7 +79,7 @@ void setup()
   TCCR1B = 0; // same for TCCR1B
   TCNT1 = 0; // initialize counter value to 0;
   // set timer count for 1kHz
-  OCR1A = 1999; // (16*10^6)/(1000*8) - 1          dt is therefore = 6ms + 1ms.
+  OCR1A = 13985; // (16*10^6)/(143*8) - 1
   //turn on CTC mode
   TCCR1B |= (1<< WGM12);
   // Set CS11 bit for 8 prescalar
@@ -112,14 +114,13 @@ void loop()
     Serial.println(error);
     Serial.print("u_d: ");
     Serial.println(u_d);
-    */
-    //Serial.println("------"); 
-    //_delay_ms(500);
+    Serial.println("------"); 
+    _delay_ms(500);
+    */   
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-  PORTD ^= 0b10000000;
   pos = feedback.readFeedback();
     /* A2D min - 42
      *  A2D max - 1020
@@ -143,13 +144,13 @@ ISR(TIMER1_COMPA_vect)
     u_p = P*error;
     
     // Integral
-    u_i += (error)*.007;
+    u_i += (error)*dt;
     u_i *= I;
     // Serial.print("u_i before: ");
     // Serial.println(u_i);
 
    // Saturate integral for anti-wind up
-    /*
+   
    if (u_i > W)
    {
     u_i = W;
@@ -158,21 +159,21 @@ ISR(TIMER1_COMPA_vect)
    {  
     u_i= -W;
    }
-   */
+   
   
     // Derivative of error
-    //dTerm = error - previousError;
-    //previousError = error;
+    dTerm = error - previousError;
+    previousError = error;
     // derivative on measurement, remember u_d is negative
     //dTerm = pos - previousPos;
     //previousPos = pos;
-    //u_d = D*dTerm/.007;
+    u_d = D*dTerm/dt;
 
     // Filter derivative
-    u_d = (D*error - filter)*N;
-    filter += .007*u_d;
+    //u_d = (D*error - filter)*N;
+    //filter += u_d*dt;
     //Serial.print("Filter term: ");
-    //Serial.println(u_d);  
+    //Serial.println(u_d);
     
     // command
     u = u_p + u_i + u_d;
@@ -182,7 +183,8 @@ ISR(TIMER1_COMPA_vect)
     if (u > 255)
     {
       // Saturate for anti-wind up
-      u_i -= u - 255;
+      //u_i -= u - 255;
+      //u_i = 0;
       //Saturate command
       u = 255;
       // Saturate for anti-wind up
@@ -192,7 +194,8 @@ ISR(TIMER1_COMPA_vect)
       else if (u < -255)
       { 
         // Saturate for anti-wind up
-        u_i += -255 - u;
+        //u_i += -255 - u;
+        //u_i = 0;
         // Saturate command
         u = -255;
         // Saturate for anti-wind up
@@ -206,7 +209,8 @@ ISR(TIMER1_COMPA_vect)
       else if (u < 0)
       {
         rightMotor.backward(-u);
-      } 
+      }
+        PORTD ^= 0b10000000;
 }
 
 void Command()
