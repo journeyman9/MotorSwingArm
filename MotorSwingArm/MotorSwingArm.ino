@@ -33,34 +33,19 @@ Motor leftMotor(motorLIN1Pin, motorLIN2Pin, motorLENPin);
 
 Pot feedback;
 
-uint32_t posSet;
-uint32_t pos;
-int32_t u;
-int32_t error;
-float u_p;
-float u_i;
-float u_d;
-int32_t dTerm;
-int32_t previousError;
-uint32_t previousPos;
+uint32_t posSet, pos, previousPos;
+int32_t u, error, dTerm, previousError;
+int32_t u_p, u_i, u_d;
 float filter;
 
-unsigned long previousMillis;
-unsigned long currentMillis;
-unsigned long duration;       // dt of loop using pin on o-scope is 6.24ms 
-float dt = .056;
+unsigned long previousMillis, currentMillis, duration; //dt is 0.2ms from o-scope 
+float dt = .002;
 
 float serialdata;
 char serialCMD;
 int inbyte;
-float P;
-float I;
-float D;
-float N;
-float W;
-float A;
-int switchnum;
-int inChar;
+float P, I, D, N, W, A;
+int switchnum, inChar;
 String inString = "";
 
 void Command();
@@ -79,7 +64,7 @@ void setup()
   TCCR1B = 0; // same for TCCR1B
   TCNT1 = 0; // initialize counter value to 0;
   // set timer count for 1kHz
-  OCR1A = 15999; // (16*10^6)/(1000*8) - 1
+  OCR1A = 3999; // (16*10^6)/(500*8) - 1
   //turn on CTC mode
   TCCR1B |= (1<< WGM12);
   // Set CS11 bit for 8 prescalar
