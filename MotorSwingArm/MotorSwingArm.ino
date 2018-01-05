@@ -40,7 +40,7 @@ int32_t error;
 float u_p;
 float u_i;
 float u_d;
-float dTerm;
+int32_t dTerm;
 int32_t previousError;
 uint32_t previousPos;
 float filter;
@@ -48,7 +48,7 @@ float filter;
 unsigned long previousMillis;
 unsigned long currentMillis;
 unsigned long duration;       // dt of loop using pin on o-scope is 6.24ms 
-float dt = .007;
+float dt = .056;
 
 float serialdata;
 char serialCMD;
@@ -79,7 +79,7 @@ void setup()
   TCCR1B = 0; // same for TCCR1B
   TCNT1 = 0; // initialize counter value to 0;
   // set timer count for 1kHz
-  OCR1A = 13985; // (16*10^6)/(143*8) - 1
+  OCR1A = 15999; // (16*10^6)/(1000*8) - 1
   //turn on CTC mode
   TCCR1B |= (1<< WGM12);
   // Set CS11 bit for 8 prescalar
@@ -159,19 +159,18 @@ ISR(TIMER1_COMPA_vect)
    {  
     u_i= -W;
    }
-   
   
     // Derivative of error
-    dTerm = error - previousError;
-    previousError = error;
+    //dTerm = error - previousError;
+    //previousError = error;
     // derivative on measurement, remember u_d is negative
     //dTerm = pos - previousPos;
     //previousPos = pos;
-    u_d = D*dTerm/dt;
+    //u_d = D*dTerm/dt;
 
     // Filter derivative
-    //u_d = (D*error - filter)*N;
-    //filter += u_d*dt;
+    u_d = (D*error - filter)*N;
+    filter += u_d*dt;
     //Serial.print("Filter term: ");
     //Serial.println(u_d);
     
